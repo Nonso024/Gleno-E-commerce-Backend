@@ -2,32 +2,43 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
-
-// MIDDLEWARE
-app.use(bodyParser.json());
-app.use(morgan("tiny"));
+const mongoose = require("mongoose");
+const cors = require("cors");
+// const errorHandler = require("./helpers/error-handler");
 
 require("dotenv/config");
 
+app.use(cors());
+app.options("*", cors());
+
 const api = process.env.API_URL; // environment variable
+const productsRoutes = require("./routers/products");
+const categoriesRoutes = require("./routers/categories");
 
-// http://localhost:3000/api/v1/products
+// middlewares
+app.use(express.json());
+app.use(morgan("tiny"));
+// app.use(errorHandler);
 
-app.get(`${api}/products`, (req, res) => {
-  const product = {
-    id: 1,
-    name: "hair dresser",
-    image: "some_url",
-  };
-  res.send(product);
-});
+// routers
+app.use(`${api}/categories`, categoriesRoutes);
+app.use(`${api}/products`, productsRoutes);
 
-app.post(`${api}/products`, (req, res) => {
-  const newProd = req.body;
-  console.log(newProd);
-  res.send(newProd);
-});
+// Database
+mongoose
+  .connect(process.env.CONNECTION_STRING, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    dbName: "gleno-database",
+  })
+  .then(() => {
+    console.log("Database Connection is ready...");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 
+// Server
 app.listen(3000, () => {
   console.log("server is running https://localhost:3000");
 });
